@@ -19,6 +19,7 @@ import SubmitButton from '../SubmitButton';
 import { useState } from 'react';
 import { UserFormValidation } from '@/lib/validation';
 import { useRouter } from 'next/navigation';
+import { createUser } from '@/lib/actions/patient.actions';
 
 export enum FormFieldType {
   INPUT = 'input',
@@ -48,20 +49,24 @@ export const PatientForm = () => {
     email,
     phone,
   }: z.infer<typeof UserFormValidation>) {
+    
     setIsLoading(true);
 
     try {
-      // const userData = { name, email, phone };
-      // const user = await createUser(userData);
+      const userData = { name, email, phone };
 
-      // if (user) router.push(`/patients/${user.$id}/register`);
+      const newUser = await createUser(userData);
+
+      if (newUser) router.push(`/patients/${newUser.$id}/register`);
+
     } catch (error) {
       console.log(error);
     }
+    setIsLoading(false);
   }
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 space-y-6">
         <section className="mb-12 space-y-4">
           <h1 className="header">Hi there</h1>
           <p className="text-dark-700">Schedule your first appointment.</p>
