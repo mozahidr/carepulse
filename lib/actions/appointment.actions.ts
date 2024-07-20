@@ -5,10 +5,12 @@ import {
   APPOINTMENT_COLLECTION_ID,
   DATABASE_ID,
   databases,
+  messaging,
 } from '../appwrite.config';
 import { pareseStringify } from '../utils';
 import { Appointment } from '@/types/appwrite.types';
 import { revalidatePath } from 'next/cache';
+import { formatDateTime } from '../utils';
 
 export const createAppointment = async (
   appointment: CreateAppointmentParams
@@ -102,10 +104,37 @@ export const updateAppointment = async ({
             throw new Error('Appointment not found');
         }
 
-        // TODO SMS notification
+        // SEND SMS notification
+
+        const smsMessage = `
+        Hi, it's CarePulse.
+        ${type === 'schedule' ? `Your appointment has been scheduled for ${formatDateTime(appointment.schedule!).dateTime}
+          with Dr. ${appointment.primaryPhysician}`
+          : `We regret to inform you that your appointment has been cancelled for the following reason: ${appointment.cancellationReason}`
+        }
+        `
+
+        await sendSMSNotification(userId, smsMessage);
+
         revalidatePath('/admin');
         return pareseStringify(updatedAppointment);
     } catch (error) {
         console.log(error);
     }
 };
+
+// Send SMS
+export const sendSMSNotification = async (userId: string, content: string) => {
+  try {
+    const message = await messaging.createSms(
+      ID.unique(),
+      content,
+      [],
+      [userId]
+    )
+
+    return pareseStringify(message);
+  } catch (error) {
+    console.log(error);
+  }
+}
